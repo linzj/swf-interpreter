@@ -5,7 +5,7 @@ import java.util.HashMap;
 import com.uc.parser.QName;
 
 public class AppDomain {
-	private byte[] appDomain = new byte[2048];
+	private byte[] appDomain = new byte[2048 * 1024];
 	private KeyValue global_object = new KeyValue() {
 		private HashMap<QName, Object> map = new HashMap<QName, Object>();
 
@@ -19,6 +19,7 @@ public class AppDomain {
 			map.put(name, value);
 		}
 	};
+	private int allocate_start;
 
 	public int getAppDomainCapacity() {
 		return appDomain.length;
@@ -82,5 +83,13 @@ public class AppDomain {
 
 	public void setGlobal(QName qName, Object val) {
 		global_object.set(qName, val);
+	}
+
+	public int allocate(int i) {
+		int old = this.allocate_start;
+		this.allocate_start += i;
+		if (this.allocate_start >= this.appDomain.length)
+			throw new IllegalStateException("Drained app domain");
+		return old;
 	}
 }

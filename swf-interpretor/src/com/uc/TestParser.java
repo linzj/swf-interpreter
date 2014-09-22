@@ -3402,7 +3402,7 @@ public class TestParser {
 		}
 		AppDomain appDom = new AppDomain();
 		int appCap = appDom.getAppDomainCapacity();
-		appDom.setGlobal(new QName("com.tencent.utils.flascc", "ESP"), appCap);
+		appDom.setGlobal(new QName("com.tencent.utils.flascc", "ESP"), appDom.allocate(2048) + 2048);
 		Interpretor interpretor = new Interpretor(appDom);
 		interpretor.callFunction(f,Interpretor.NULL_OBJECT, new Object[] {1,"nimabi", 2});
 	}
