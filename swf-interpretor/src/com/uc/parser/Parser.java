@@ -22,29 +22,22 @@ public class Parser {
 		this.src = new BufferedReader(new InputStreamReader(src));
 		this.context = new Function();
 		operand_parsers = new HashMap<Integer, OperandParser>();
-		operand_parsers.put(ByteCodeType.LABEL, new OperandParser() {
+		OperandParser label_parser = new OperandParser() {
 
 			@Override
 			public Object parse(String operand_string) {
-				return operand_string;
-			}
-		});
-		OperandParser if_parser = new OperandParser() {
-
-			@Override
-			public Object parse(String operand_string) {
-				try {
-					return Integer.valueOf(operand_string);
-				} catch (NumberFormatException e) {
-					return null;
-				}
+				if (operand_string.startsWith("ofs"))
+					return operand_string;
+				return null;
 			}
 		};
-		operand_parsers.put(ByteCodeType.IFEQ, if_parser);
-		operand_parsers.put(ByteCodeType.IFGE, if_parser);
-		operand_parsers.put(ByteCodeType.IFGT, if_parser);
-		operand_parsers.put(ByteCodeType.IFLT, if_parser);
-		operand_parsers.put(ByteCodeType.IFNE, if_parser);
+		operand_parsers.put(ByteCodeType.IFEQ, label_parser);
+		operand_parsers.put(ByteCodeType.IFGE, label_parser);
+		operand_parsers.put(ByteCodeType.IFGT, label_parser);
+		operand_parsers.put(ByteCodeType.IFLT, label_parser);
+		operand_parsers.put(ByteCodeType.IFNE, label_parser);
+		operand_parsers.put(ByteCodeType.JUMP, label_parser);
+		operand_parsers.put(ByteCodeType.LABEL, label_parser);
 	}
 
 	private String formatError(String desc) {

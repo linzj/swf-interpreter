@@ -15,6 +15,6 @@ public class Function {
 				+ "max_stack = %d\nlocal_count = %d\n"
 				+ "init_scoped_depth = %d\n"
 				+ "max_scope_depth = %d\ncode:\n%s\n", name, param_count,
-				max_stack, init_scoped_depth, max_scope_depth, code.toString());
+				max_stack, local_count, init_scoped_depth, max_scope_depth, code.toString());
 	}
 }
