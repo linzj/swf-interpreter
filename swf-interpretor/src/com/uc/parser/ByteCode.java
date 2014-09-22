@@ -1,8 +1,9 @@
 package com.uc.parser;
 
 public class ByteCode {
-	int type_index;
-	Object [] operands;
+	public int type_index;
+	public Object [] operands;
+	public int line_number;
 	@Override
 	public String toString() {
 		ByteCodeType type = ByteCodeType.findByIndex(type_index);

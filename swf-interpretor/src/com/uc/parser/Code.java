@@ -1,10 +1,9 @@
 package com.uc.parser;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.ArrayList;
 
 public class Code {
-	List<ByteCode> byte_codes = new LinkedList<ByteCode>();
+	public ArrayList<ByteCode> byte_codes = new ArrayList<ByteCode>();
 
 	@Override
 	public String toString() {

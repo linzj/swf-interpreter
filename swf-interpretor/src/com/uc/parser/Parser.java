@@ -165,9 +165,9 @@ public class Parser {
 						start_of_second_quote + 1);
 				if (end_of_second_quote == -1)
 					break;
-				return new QName(part.substring(start_of_first_quote,
+				return new QName(part.substring(start_of_first_quote + 1,
 						end_of_first_quote), part.substring(
-						start_of_second_quote, end_of_second_quote));
+						start_of_second_quote + 1, end_of_second_quote));
 			} while (false);
 		}
 		return null;
@@ -220,6 +220,7 @@ public class Parser {
 		}
 		ByteCode code = new ByteCode();
 		code.type_index = type.index;
+		code.line_number = this.line_count;
 		parseOperands(code, parts);
 		this.context.code.byte_codes.add(code);
 	}

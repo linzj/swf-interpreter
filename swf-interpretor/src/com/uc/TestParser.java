@@ -1,8 +1,15 @@
-package com.uc.parser;
+package com.uc;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+
+import com.uc.interpretor.AppDomain;
+import com.uc.interpretor.Interpretor;
+import com.uc.parser.Function;
+import com.uc.parser.ParseException;
+import com.uc.parser.Parser;
+import com.uc.parser.QName;
 
 public class TestParser {
 
@@ -3385,12 +3392,19 @@ public class TestParser {
 	public static void main(String[] args) {
 		InputStream input = new ByteArrayInputStream(
 				src.getBytes(StandardCharsets.UTF_8));
+		Function f = null;
 		try {
-			Function f = Parser.parse(input);
+			f = Parser.parse(input);
 			System.out.println(f.toString());
 		} catch (ParseException e) {
 			e.printStackTrace();
+			System.exit(1);
 		}
+		AppDomain appDom = new AppDomain();
+		int appCap = appDom.getAppDomainCapacity();
+		appDom.setGlobal(new QName("com.tencent.utils.flascc", "ESP"), appCap);
+		Interpretor interpretor = new Interpretor(appDom);
+		interpretor.callFunction(f,Interpretor.NULL_OBJECT, new Object[] {1,"nimabi", 2});
 	}
 
 }
