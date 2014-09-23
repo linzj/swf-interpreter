@@ -3433,7 +3433,7 @@ public class TestParser {
 		FunctionData f = null;
 		try {
 			f = Parser.parse(input);
-			System.out.println(f.toString());
+			// System.out.println(f.toString());
 		} catch (ParseException e) {
 			e.printStackTrace();
 			System.exit(1);
@@ -3554,13 +3554,22 @@ public class TestParser {
 						"com.tencent.utils.flascc__3A__5C_tools_5C_Crossbridge_1_2E_0_2E_1_5C_cygwin_5C_tmp_5C_cc5XyE1n_2E_lto_2E_bc_3A_88a86364_2D_2ed8_2D_4437_2D_97b8_2D_85f87616a043",
 						"F_idalloc"), new NativeFunction() {
 
-							@Override
-							public Object call(Object receiver, Object[] params) {
-								return null;
-							}
+					@Override
+					public Object call(Object receiver, Object[] params) {
+						return null;
+					}
 				});
-		Object ret = interpretor.callGlobalFunction(f, new Object[] { 1,
-				"nimabi", 2 });
+		Object ret = null;
+		if (args.length != 3)
+			ret = interpretor.callGlobalFunction(f, new Object[] { 11,
+					"3.2.18.278", 0x54213260 });
+		else {
+			Integer p0 = Integer.valueOf(args[0]);
+			String p1 = args[1];
+			Integer p2 = Integer.valueOf(args[2]);
+			ret = interpretor
+					.callGlobalFunction(f, new Object[] { p0, p1, p2 });
+		}
 		System.out.println("ret = " + ret.toString());
 	}
 
