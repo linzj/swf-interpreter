@@ -1,12 +1,20 @@
 package com.uc;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
 import com.uc.interpretor.AppDomain;
+import com.uc.interpretor.Function;
 import com.uc.interpretor.Interpretor;
-import com.uc.parser.Function;
+import com.uc.interpretor.Module;
+import com.uc.interpretor.NativeFunction;
+import com.uc.parser.FunctionData;
 import com.uc.parser.ParseException;
 import com.uc.parser.Parser;
 import com.uc.parser.QName;
@@ -21,7 +29,7 @@ public class TestParser {
 			+ "returns Qname(PackageNamespace(\"\"),\"String\")\n"
 			+ "\n"
 			+ "body\n"
-			+ "maxstack 5\n"
+			+ "maxstack 50\n"
 			+ "localcount 45\n"
 			+ "initscopedepth 0\n"
 			+ "maxscopedepth 2\n"
@@ -3388,11 +3396,41 @@ public class TestParser {
 			+ "swap\n"
 			+ "setproperty Qname(PackageNamespace(\"com.tencent.utils.flascc\"),\"ESP\")\n"
 			+ "getlocal 21\n" + "returnvalue\n";
+	static String src_of_fmemset = "method\n"
+			+ "name Fmemset\n"
+			+ "returns Qname(PackageNamespace(\"\"),\"void\")\n"
+			+ "\n"
+			+ "body\n"
+			+ "maxstack 5\n"
+			+ "localcount 5\n"
+			+ "initscopedepth 0\n"
+			+ "maxscopedepth 2\n"
+			+ "\n"
+			+ "code\n"
+			+ "getlocal_0\n"
+			+ "dup\n"
+			+ "pushscope\n"
+			+ "pushscope\n"
+			+ "getlex Qname(PackageNamespace(\"com.tencent.utils.flascc\"),\"ESP\")\n"
+			+ "convert_i\n" + "setlocal 1\n" + "getlocal_1\n" + "li32\n"
+			+ "setlocal 4\n" + "getlocal_1\n" + "pushbyte 4\n" + "add\n"
+			+ "li32\n" + "setlocal 2\n" + "getlocal_1\n" + "pushbyte 8\n"
+			+ "add\n" + "li32\n" + "setlocal 3\n" + "getlocal_2\n"
+			+ "iftrue ofs003d\n" + "jump ofs0036\n" + "label ofs0022\n"
+			+ "pushbyte 0\n" + "getlocal 4\n" + "sf64\n" + "getlocal 4\n"
+			+ "pushbyte 8\n" + "add\n" + "convert_i\n" + "setlocal 4\n"
+			+ "getlocal_3\n" + "pushbyte 8\n" + "subtract\n" + "convert_i\n"
+			+ "setlocal 3\n" + "label ofs0036\n" + "getlocal_3\n"
+			+ "pushbyte 8\n" + "ifge ofs0022\n" + "label ofs003d\n"
+			+ "jump ofs004a\n" + "label ofs0041\n" + "getlocal_2\n"
+			+ "getlocal 4\n" + "si8\n" + "inclocal_i 4\n" + "declocal_i 3\n"
+			+ "label ofs004a\n" + "getlocal_3\n" + "iftrue ofs0041\n"
+			+ "returnvoid\n";
 
-	public static void main(String[] args) {
+	private static Function getFunction(String mysrc) {
 		InputStream input = new ByteArrayInputStream(
-				src.getBytes(StandardCharsets.UTF_8));
-		Function f = null;
+				mysrc.getBytes(StandardCharsets.UTF_8));
+		FunctionData f = null;
 		try {
 			f = Parser.parse(input);
 			System.out.println(f.toString());
@@ -3400,11 +3438,130 @@ public class TestParser {
 			e.printStackTrace();
 			System.exit(1);
 		}
-		AppDomain appDom = new AppDomain();
-		int appCap = appDom.getAppDomainCapacity();
-		appDom.setGlobal(new QName("com.tencent.utils.flascc", "ESP"), appDom.allocate(2048) + 2048);
+		return new Function(f);
+	}
+
+	private static Function getCCCFunction() {
+		return getFunction(src);
+	}
+
+	private static Function getFmemsetFunction() {
+		return getFunction(src_of_fmemset);
+	}
+
+	static byte[] getFileData(String name) throws IOException {
+		File f = new File(name);
+		if (!f.exists())
+			throw new java.io.FileNotFoundException();
+		byte[] ret = new byte[(int) f.length()];
+		FileInputStream finput = null;
+		try {
+			finput = new FileInputStream(f);
+			finput.read(ret);
+		} finally {
+			if (finput != null)
+				finput.close();
+		}
+		return ret;
+	}
+
+	static byte[] getROData() throws IOException {
+		return getFileData("rodata");
+	}
+
+	static byte[] getData() throws IOException {
+		return getFileData("data");
+	}
+
+	static byte[] getROStrData() throws IOException {
+		return getFileData("rodata_str");
+	}
+
+	public static void main(String[] args) {
+		Function f = getCCCFunction();
+		final AppDomain appDom = new AppDomain();
+		appDom.setGlobal(new QName("com.tencent.utils.flascc", "ESP"),
+				appDom.allocate(40960) + 40960);
+		final Module CModule = new Module(new QName("com.tencent.utils.flascc",
+				"CModule"));
+		CModule.set(new QName("", "mallocString"), new NativeFunction() {
+
+			@Override
+			public Object call(Object receiver, Object[] params) {
+				if (receiver != CModule)
+					throw new IllegalStateException("receiver must be CModule");
+				String s = (String) params[0];
+				byte[] b = s.getBytes(StandardCharsets.UTF_8);
+				return appDom.allocateFromBytes(b);
+			}
+		});
+		CModule.set(new QName("", "readString"), new NativeFunction() {
+
+			@Override
+			public Object call(Object receiver, Object[] params) {
+				if (receiver != CModule)
+					throw new IllegalStateException("receiver must be CModule");
+				if (params.length != 2)
+					throw new IllegalArgumentException(
+							"needs extractly 2 arguments");
+				Integer ptr = (Integer) params[0];
+				Integer len = (Integer) params[1];
+				ByteBuffer buffer_of_string = ByteBuffer.wrap(
+						appDom.getDomainMemory(), ptr, len);
+				return StandardCharsets.UTF_8.decode(buffer_of_string)
+						.toString();
+			}
+		});
+		;
+		appDom.setGlobal(CModule.getName(), CModule);
+		appDom.setGlobal(new QName("com.tencent.utils.flascc", "Fmemset"),
+				getFmemsetFunction());
 		Interpretor interpretor = new Interpretor(appDom);
-		interpretor.callFunction(f,Interpretor.NULL_OBJECT, new Object[] {1,"nimabi", 2});
+		// set up ro data here
+		try {
+			byte[] rodata = getROData();
+			int offset = appDom.allocateFromBytes(rodata);
+			appDom.setGlobal(
+					new QName(
+							"com.tencent.utils.flascc__3A__5C_tools_5C_Crossbridge_1_2E_0_2E_1_5C_cygwin_5C_tmp_5C_cc5XyE1n_2E_lto_2E_bc_3A_88a86364_2D_2ed8_2D_4437_2D_97b8_2D_85f87616a043",
+							"L__2E_str3"), offset + 144);
+		} catch (IOException e) {
+			throw new IllegalStateException("fails to set up ro data", e);
+		}
+		try {
+			byte[] data = getData();
+			int offset = appDom.allocateFromBytes(data);
+			appDom.setGlobal(
+					new QName(
+							"com.tencent.utils.flascc__3A__5C_tools_5C_Crossbridge_1_2E_0_2E_1_5C_cygwin_5C_tmp_5C_cc5XyE1n_2E_lto_2E_bc_3A_88a86364_2D_2ed8_2D_4437_2D_97b8_2D_85f87616a043",
+							"_next"), offset + 120);
+		} catch (IOException e) {
+			throw new IllegalStateException("fails to set up ro data", e);
+		}
+		try {
+			byte[] data = getROStrData();
+			int offset = appDom.allocateFromBytes(data);
+			appDom.setGlobal(
+					new QName(
+							"com.tencent.utils.flascc__3A__5C_tools_5C_Crossbridge_1_2E_0_2E_1_5C_cygwin_5C_tmp_5C_cc5XyE1n_2E_lto_2E_bc_3A_88a86364_2D_2ed8_2D_4437_2D_97b8_2D_85f87616a043",
+							"__ZZ28convertHexDataToBase64StringE10base64Char"),
+					offset + 0);
+		} catch (IOException e) {
+			throw new IllegalStateException("fails to set up ro data", e);
+		}
+		appDom.setGlobal(
+				new QName(
+						"com.tencent.utils.flascc__3A__5C_tools_5C_Crossbridge_1_2E_0_2E_1_5C_cygwin_5C_tmp_5C_cc5XyE1n_2E_lto_2E_bc_3A_88a86364_2D_2ed8_2D_4437_2D_97b8_2D_85f87616a043",
+						"F_idalloc"), new NativeFunction() {
+
+							@Override
+							public Object call(Object receiver, Object[] params) {
+								return null;
+							}
+				});
+		Object ret = interpretor.callGlobalFunction(f, new Object[] { 1,
+				"nimabi", 2 });
+		System.out.println("ret = " + ret.toString());
 	}
 
 }

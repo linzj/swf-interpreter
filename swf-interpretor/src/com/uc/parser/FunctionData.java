@@ -1,6 +1,6 @@
 package com.uc.parser;
 
-public class Function {
+public class FunctionData {
 	public int param_count;
 	public int max_stack;
 	public int local_count;

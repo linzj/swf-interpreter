@@ -1,5 +1,7 @@
 package com.uc.interpretor;
 
+import java.nio.ByteBuffer;
+
 import com.uc.parser.ByteCode;
 import com.uc.parser.ByteCodeType;
 import com.uc.parser.QName;
@@ -12,7 +14,7 @@ class Interpretors {
 		public Object interpret(ByteCode code, Context context) {
 			Integer i1 = (Integer) context.pop();
 			Integer i2 = (Integer) context.pop();
-			return i1 + i2;
+			return i2 + i1;
 		}
 	}
 
@@ -21,9 +23,13 @@ class Interpretors {
 
 		@Override
 		public Object interpret(ByteCode code, Context context) {
-			Integer i1 = (Integer) context.pop();
-			Integer i2 = (Integer) context.pop();
-			return i1 & i2;
+			Object o1 = context.pop();
+			Object o2 = context.pop();
+			int[] out = objectsToIntegers(o1, o2);
+			int i1 = out[0];
+			int i2 = out[1];
+
+			return i2 & i1;
 		}
 	}
 
@@ -34,7 +40,7 @@ class Interpretors {
 		public Object interpret(ByteCode code, Context context) {
 			Integer i1 = (Integer) context.pop();
 			Integer i2 = (Integer) context.pop();
-			return i1 | i2;
+			return i2 | i1;
 		}
 	}
 
@@ -43,9 +49,10 @@ class Interpretors {
 
 		@Override
 		public Object interpret(ByteCode code, Context context) {
-			Integer i1 = (Integer) context.pop();
-			Integer i2 = (Integer) context.pop();
-			return i1 ^ i2;
+			Object o1 = context.pop();
+			Object o2 = context.pop();
+			int[] out = objectsToIntegers(o1, o2);
+			return out[1] ^ out[0];
 		}
 	}
 
@@ -145,11 +152,11 @@ class Interpretors {
 			if (o1 instanceof Double || o2 instanceof Double) {
 				Double d1 = (Double) o1;
 				Double d2 = (Double) o2;
-				return d1 / d2;
+				return d2 / d1;
 			} else if (o1 instanceof Integer || o2 instanceof Integer) {
 				Integer i1 = (Integer) o1;
 				Integer i2 = (Integer) o2;
-				return i1 / i2;
+				return i2 / i1;
 			} else
 				throw new IllegalStateException("unable to divide non number");
 		}
@@ -255,7 +262,7 @@ class Interpretors {
 		protected boolean success(Context context) {
 			Object o1 = context.pop();
 			Object o2 = context.pop();
-			return o1.equals(o2);
+			return o2.equals(o1);
 		}
 	}
 
@@ -266,7 +273,7 @@ class Interpretors {
 		protected boolean success(Context context) {
 			Integer o1 = (Integer) context.pop();
 			Integer o2 = (Integer) context.pop();
-			return o1 >= o2;
+			return o2 >= o1;
 		}
 	}
 
@@ -277,7 +284,7 @@ class Interpretors {
 		protected boolean success(Context context) {
 			Integer o1 = (Integer) context.pop();
 			Integer o2 = (Integer) context.pop();
-			return o1 > o2;
+			return o2 > o1;
 		}
 	}
 
@@ -288,7 +295,7 @@ class Interpretors {
 		protected boolean success(Context context) {
 			Integer o1 = (Integer) context.pop();
 			Integer o2 = (Integer) context.pop();
-			return o1 < o2;
+			return o2 < o1;
 		}
 	}
 
@@ -297,9 +304,20 @@ class Interpretors {
 
 		@Override
 		protected boolean success(Context context) {
+			Object o1 = context.pop();
+			Object o2 = context.pop();
+			int[] out = objectsToIntegers(o1, o2);
+			return out[1] != out[0];
+		}
+	}
+
+	static class IfTrue extends IfFamily {
+		static final int code = ByteCodeType.IFTRUE;
+
+		@Override
+		protected boolean success(Context context) {
 			Integer o1 = (Integer) context.pop();
-			Integer o2 = (Integer) context.pop();
-			return !o1.equals(o2);
+			return o1 != 0;
 		}
 	}
 
@@ -341,14 +359,40 @@ class Interpretors {
 		}
 	}
 
+	static int[] objectsToIntegers(Object o1, Object o2) {
+		int[] output = new int[2];
+		if (o2 instanceof Integer) {
+			int i1 = (int) o1;
+			int i2 = (int) o2;
+			output[0] = i1;
+			output[1] = i2;
+			return output;
+		} else if (o2 instanceof Byte) {
+			int i1 = 0;
+			if (o1 instanceof Byte) {
+				i1 = ((int) (byte) o1) & 0xff;
+			} else if (o1 instanceof Integer) {
+				i1 = (int) o1;
+			} else
+				throw new IllegalStateException(
+						"the stack should conains integers");
+			int i2 = ((int) ((byte) o2) & 0xff);
+			output[0] = i1;
+			output[1] = i2;
+			return output;
+		}
+		throw new IllegalStateException("the stack should conains integers");
+	}
+
 	static class LShift implements ByteCodeInterpretor {
 		static final int code = ByteCodeType.LSHIFT;
 
 		@Override
 		public Object interpret(ByteCode code, Context context) {
-			Integer i1 = (Integer) context.pop();
-			Integer i2 = (Integer) context.pop();
-			return i1 << i2;
+			Object o1 = context.pop();
+			Object o2 = context.pop();
+			int[] out = objectsToIntegers(o1, o2);
+			return out[1] << out[0];
 		}
 	}
 
@@ -359,7 +403,7 @@ class Interpretors {
 		public Object interpret(ByteCode code, Context context) {
 			Integer i1 = (Integer) context.pop();
 			Integer i2 = (Integer) context.pop();
-			return i1 % i2;
+			return i2 % i1;
 		}
 	}
 
@@ -370,7 +414,7 @@ class Interpretors {
 		public Object interpret(ByteCode code, Context context) {
 			Integer i1 = (Integer) context.pop();
 			Integer i2 = (Integer) context.pop();
-			return i1 * i2;
+			return i2 * i1;
 		}
 	}
 
@@ -422,6 +466,16 @@ class Interpretors {
 		}
 	}
 
+	static class ReturnVoid implements ByteCodeInterpretor {
+		static final int code = ByteCodeType.RETURNVOID;
+
+		@Override
+		public Object interpret(ByteCode code, Context context) {
+			context.returnVoid();
+			return null;
+		}
+	}
+
 	static class Rshift implements ByteCodeInterpretor {
 		static final int code = ByteCodeType.RSHIFT;
 
@@ -429,7 +483,7 @@ class Interpretors {
 		public Object interpret(ByteCode code, Context context) {
 			Integer i1 = (Integer) context.pop();
 			Integer i2 = (Integer) context.pop();
-			return i1 >> i2;
+			return i2 >> i1;
 		}
 	}
 
@@ -455,25 +509,66 @@ class Interpretors {
 		}
 	}
 
-	static class Si32 implements ByteCodeInterpretor {
-		static final int code = ByteCodeType.SI32; 
+	static class Sf64 implements ByteCodeInterpretor {
+		static final int code = ByteCodeType.SF64;
 
 		@Override
 		public Object interpret(ByteCode code, Context context) {
+			Object offset = context.pop();
 			Object value = context.pop();
+			double dvalue = (double) (int) value;
+			byte[] bytes = new byte[8];
+			ByteBuffer.wrap(bytes).putDouble(dvalue);
+			context.writeAppDomain(bytes, (Integer) offset);
+			return null;
+		}
+	}
+
+	static class IncLocal_i implements ByteCodeInterpretor {
+		static final int code = ByteCodeType.INCLOCAL_I;
+
+		@Override
+		public Object interpret(ByteCode code, Context context) {
+			int who = (Integer) code.operands[0];
+			int num = (Integer) context.locals[who];
+			context.locals[who] = num + 1;
+
+			return null;
+		}
+	}
+
+	static class DecLocal_i implements ByteCodeInterpretor {
+		static final int code = ByteCodeType.DECLOCAL_I;
+
+		@Override
+		public Object interpret(ByteCode code, Context context) {
+			int who = (Integer) code.operands[0];
+			int num = (Integer) context.locals[who];
+			context.locals[who] = num - 1;
+
+			return null;
+		}
+	}
+
+	static class Si32 implements ByteCodeInterpretor {
+		static final int code = ByteCodeType.SI32;
+
+		@Override
+		public Object interpret(ByteCode code, Context context) {
 			Integer offset = (Integer) context.pop();
+			Object value = context.pop();
 			context.setAppDomain(value, offset, 32);
 			return null;
 		}
 	}
 
 	static class Si8 implements ByteCodeInterpretor {
-		static final int code = ByteCodeType.SI8; 
+		static final int code = ByteCodeType.SI8;
 
 		@Override
 		public Object interpret(ByteCode code, Context context) {
-			Object value = context.pop();
 			Integer offset = (Integer) context.pop();
+			Object value = context.pop();
 			context.setAppDomain(value, offset, 8);
 			return null;
 		}
@@ -486,7 +581,7 @@ class Interpretors {
 		public Object interpret(ByteCode code, Context context) {
 			Integer i1 = (Integer) context.pop();
 			Integer i2 = (Integer) context.pop();
-			return i1 - i2;
+			return i2 - i1;
 		}
 	}
 
@@ -508,12 +603,15 @@ class Interpretors {
 
 		@Override
 		public Object interpret(ByteCode code, Context context) {
-			Integer i1 = (Integer) context.pop();
-			Integer i2 = (Integer) context.pop();
-			int ret = i1 >> i2;
+			Object o1 = context.pop();
+			Object o2 = context.pop();
+			int[] out = objectsToIntegers(o1, o2);
+			int i1 = out[0];
+			int i2 = out[1];
+			int ret = i2 >> i1;
 			int andValue = 0;
-			for (int i = 31; i >= 0; --i)
-				andValue |= 1 << i;
+			for (int i = 0; i < i1; ++i)
+				andValue |= 1 << (31 - i);
 			return ret & (~andValue);
 		}
 	}

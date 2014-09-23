@@ -9,7 +9,7 @@ import java.util.HashMap;
 
 public class Parser {
 	private BufferedReader src;
-	private Function context;
+	private FunctionData context;
 	private int line_count = 1;
 
 	interface OperandParser {
@@ -20,7 +20,7 @@ public class Parser {
 
 	private Parser(InputStream src) {
 		this.src = new BufferedReader(new InputStreamReader(src));
-		this.context = new Function();
+		this.context = new FunctionData();
 		operand_parsers = new HashMap<Integer, OperandParser>();
 		OperandParser label_parser = new OperandParser() {
 
@@ -38,6 +38,7 @@ public class Parser {
 		operand_parsers.put(ByteCodeType.IFNE, label_parser);
 		operand_parsers.put(ByteCodeType.JUMP, label_parser);
 		operand_parsers.put(ByteCodeType.LABEL, label_parser);
+		operand_parsers.put(ByteCodeType.IFTRUE, label_parser);
 	}
 
 	private String formatError(String desc) {
@@ -249,14 +250,14 @@ public class Parser {
 		}
 	}
 
-	private Function parse() throws ParseException {
+	private FunctionData parse() throws ParseException {
 		parseMethod();
 		parseBody();
 		parseCode();
 		return this.context;
 	}
 
-	public static Function parse(InputStream input) throws ParseException {
+	public static FunctionData parse(InputStream input) throws ParseException {
 		return new Parser(input).parse();
 	}
 }

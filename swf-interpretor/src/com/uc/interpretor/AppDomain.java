@@ -5,21 +5,11 @@ import java.util.HashMap;
 import com.uc.parser.QName;
 
 public class AppDomain {
-	private byte[] appDomain = new byte[2048 * 1024];
-	private KeyValue global_object = new KeyValue() {
-		private HashMap<QName, Object> map = new HashMap<QName, Object>();
-
-		@Override
-		public Object get(QName name) {
-			return map.get(name);
-		}
-
-		@Override
-		public void set(QName name, Object value) {
-			map.put(name, value);
-		}
-	};
+	private byte[] appDomain = new byte[4096 * 1024];
 	private int allocate_start;
+
+	private Module global_module = new Module(new QName("__GLOBAL__",
+			"__GLOBAL__"));
 
 	public int getAppDomainCapacity() {
 		return appDomain.length;
@@ -31,10 +21,10 @@ public class AppDomain {
 			return appDomain[offset];
 		case 32:
 			// always little endian
-			byte i0 = appDomain[offset];
-			byte i1 = appDomain[offset + 1];
-			byte i2 = appDomain[offset + 2];
-			byte i3 = appDomain[offset + 3];
+			int i0 = appDomain[offset] & 0xff;
+			int i1 = appDomain[offset + 1] & 0xff;
+			int i2 = appDomain[offset + 2] & 0xff;
+			int i3 = appDomain[offset + 3] & 0xff;
 			int ret = 0;
 			ret |= i0;
 			ret |= i1 << 8;
@@ -48,7 +38,13 @@ public class AppDomain {
 	public void setAppDomain(Object value, Integer offset, int what) {
 		switch (what) {
 		case 8:
-			appDomain[offset] = (byte) ((Integer) value & 0xff);
+			if (value instanceof Integer)
+				appDomain[offset] = (byte) ((Integer) value & 0xff);
+			else if (value instanceof Byte)
+				appDomain[offset] = (byte) value;
+			else
+				throw new IllegalStateException(
+						"setAppDomain with what 8 should pass an integer value");
 			return;
 		case 32:
 			// always little endian
@@ -68,21 +64,21 @@ public class AppDomain {
 	}
 
 	public boolean tryFindInGlobal(QName qName) {
-		if (global_object.get(qName) != null)
+		if (global_module.get(qName) != null)
 			return true;
 		return false;
 	}
 
 	public Object findInGlobal(QName qName) {
-		return global_object.get(qName);
+		return global_module.get(qName);
 	}
 
 	public Object getGlobalObject() {
-		return global_object;
+		return global_module;
 	}
 
 	public void setGlobal(QName qName, Object val) {
-		global_object.set(qName, val);
+		global_module.set(qName, val);
 	}
 
 	public int allocate(int i) {
@@ -91,5 +87,27 @@ public class AppDomain {
 		if (this.allocate_start >= this.appDomain.length)
 			throw new IllegalStateException("Drained app domain");
 		return old;
+	}
+
+	public void writeBytes(byte[] bytes, int offset) {
+		if (bytes.length + offset > this.allocate_start) {
+			throw new IllegalArgumentException(
+					"Should never go beyone this.allocate_start");
+		}
+		System.arraycopy(bytes, 0, this.appDomain, offset, bytes.length);
+	}
+
+	public int allocateFromBytes(byte[] b) {
+		int offset = this.allocate(b.length);
+		writeBytes(b, offset);
+		return offset;
+	}
+
+	public Module getGlobalModule() {
+		return global_module;
+	}
+
+	public byte[] getDomainMemory() {
+		return appDomain;
 	}
 }

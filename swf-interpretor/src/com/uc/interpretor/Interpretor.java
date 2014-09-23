@@ -5,7 +5,7 @@ import java.lang.reflect.Modifier;
 
 import com.uc.parser.ByteCode;
 import com.uc.parser.ByteCodeType;
-import com.uc.parser.Function;
+import com.uc.parser.FunctionData;
 import com.uc.parser.QName;
 
 public class Interpretor {
@@ -32,16 +32,27 @@ public class Interpretor {
 	private Context current_context = null;
 	private boolean current_return = false;
 	private AppDomain app_domain;
+	private boolean has_value = false;
 
 	public Interpretor(AppDomain app_domain) {
 		this.app_domain = app_domain;
 	}
 
-	public Object callFunction(Function f, Object receiver, Object[] params) {
-		Context c = new Context(f, this, receiver, params);
-		c.prev = current_context;
-		current_context = c;
-		return interpret();
+	public Object callGlobalFunction(Object f, Object[] params) {
+		return callFunction(f, app_domain.getGlobalModule(), params);
+	}
+
+	public Object callFunction(Object f, Object receiver, Object[] params) {
+		if (f instanceof Function) {
+			Context c = new Context((Function) f, this, receiver, params);
+			c.prev = current_context;
+			current_context = c;
+			return interpret();
+		} else if (f instanceof NativeFunction) {
+			return ((NativeFunction) f).call(receiver, params);
+		} else
+			throw new IllegalStateException(
+					"call function needs a function object f");
 	}
 
 	private Object interpret() {
@@ -50,13 +61,18 @@ public class Interpretor {
 			ByteCode code = current_context.getCurrentCode();
 			ByteCodeInterpretor interpretor = getInterpretor(code);
 			Object shouldPush = interpretor.interpret(code, current_context);
-			if(shouldPush != null)
+			if (shouldPush != null)
 				current_context.push(shouldPush);
 		}
-		Object retVal = current_context.pop();
+		Object retVal = null;
+		if (this.has_value)
+			retVal = current_context.pop();
 		Context willBeDetach = current_context;
 		current_context = current_context.prev;
 		willBeDetach.prev = null;
+		// reset the status values
+		current_return = false;
+		has_value = false;
 		return retVal;
 	}
 
@@ -67,19 +83,22 @@ public class Interpretor {
 	public Object call(Object[] operands) {
 		Integer should_pop = (Integer) operands[1];
 		Object[] params = new Object[should_pop];
-		for (int i = 0; i < should_pop; ++i) {
+		for (int i = should_pop - 1; i >= 0; --i) {
 			params[i] = current_context.pop();
 		}
 		Object receiver = current_context.pop();
-		Function f = findFunction((QName) operands[0]);
+		Object f = findFunction((QName) operands[0], receiver);
 		if (f == null)
-			throw new IllegalStateException("fails to find function: " + operands[0].toString());
-		return callFunction(f, receiver , params);
+			throw new IllegalStateException("fails to find function: "
+					+ operands[0].toString());
+		return callFunction(f, receiver, params);
 	}
 
-	private Function findFunction(QName qName) {
-		// TODO Auto-generated method stub
-		return null;
+	private Object findFunction(QName qName, Object receiver) {
+		if (!(receiver instanceof Receiver)) {
+			throw new IllegalStateException("receiver needs to be a receiver");
+		}
+		return ((Receiver) receiver).get(qName);
 	}
 
 	private static void tryAddClass(Class<?> c) {
@@ -144,7 +163,7 @@ public class Interpretor {
 	}
 
 	public Object loadAppDomain(Integer offset, int what) {
-		return app_domain.loadAppDomain(offset,what);
+		return app_domain.loadAppDomain(offset, what);
 	}
 
 	public void setAppDomain(Object value, Integer offset, int what) {
@@ -163,8 +182,13 @@ public class Interpretor {
 		return app_domain.getGlobalObject();
 	}
 
-	public void setReturn() {
+	public void setReturn(boolean has_value) {
 		this.current_return = true;
+		this.has_value = has_value;
+	}
+
+	public void writeAppDomain(byte[] bytes, int offset) {
+		app_domain.writeBytes(bytes, offset);
 	}
 
 }

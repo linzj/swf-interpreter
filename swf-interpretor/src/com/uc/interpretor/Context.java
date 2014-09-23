@@ -5,7 +5,7 @@ import java.util.HashMap;
 import com.uc.parser.ByteCode;
 import com.uc.parser.ByteCodeType;
 import com.uc.parser.Code;
-import com.uc.parser.Function;
+import com.uc.parser.FunctionData;
 import com.uc.parser.QName;
 
 class Context {
@@ -42,9 +42,9 @@ class Context {
 
 	Context(Function f, Interpretor interpretor, Object receiver, Object [] params) {
 		function = f;
-		code = f.code;
-		locals = new Object[f.local_count];
-		MAX_STACK = f.max_stack;
+		code = f.getData().code;
+		locals = new Object[f.getData().local_count];
+		MAX_STACK = f.getData().max_stack;
 		stack = new Object[MAX_STACK];
 		this.interpretor = interpretor;
 		setupLocals(receiver, params);
@@ -72,7 +72,6 @@ class Context {
 	}
 
 	public Object loadAppDomain(Integer offset, int what) {
-		// TODO Auto-generated method stub
 		return interpretor.loadAppDomain(offset, what);
 	}
 
@@ -102,16 +101,25 @@ class Context {
 	}
 
 	public void returnValue() {
-		interpretor.setReturn();
+		interpretor.setReturn(true);
 	}
 
+	public void returnVoid() {
+		interpretor.setReturn(false);
+	}
+
+
 	public void setProperty(Object objectToFind, QName qName, Object value) {
-		KeyValue kv = (KeyValue) objectToFind;
+		Receiver kv = (Receiver) objectToFind;
 		kv.set(qName, value);
 	}
 
 	public ByteCode getCurrentCode() {
 		return code.byte_codes.get(pc++);
+	}
+
+	public void writeAppDomain(byte[] bytes, int offset) {
+		interpretor.writeAppDomain(bytes, offset);
 	}
 
 }

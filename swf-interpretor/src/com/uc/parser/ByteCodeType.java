@@ -60,7 +60,13 @@ public class ByteCodeType {
 	public static final int SUBTRACT = 46;
 	public static final int SWAP = 47;
 	public static final int URSHIFT = 48;
-	public static final int BYTECODE_COUNT = 49;
+	public static final int IFTRUE = 49;
+	public static final int SF64 = 50;
+	public static final int INCLOCAL_I = 51;
+	public static final int DECLOCAL_I = 52;
+	public static final int RETURNVOID = 53;
+
+	public static final int BYTECODE_COUNT = 54;
 
 	static private ByteCodeType[] types;
 	static private HashMap<String, ByteCodeType> fast_name_map = new HashMap<String, ByteCodeType>();
@@ -74,7 +80,8 @@ public class ByteCodeType {
 				"lshift", "modulo", "multiply", "pushbyte", "pushint",
 				"pushnan", "pushnull", "pushscope", "pushshort", "pushuint",
 				"returnvalue", "rshift", "setlocal", "setproperty", "si32",
-				"si8", "subtract", "swap", "urshift" };
+				"si8", "subtract", "swap", "urshift", "iftrue", "sf64",
+				"inclocal_i", "declocal_i", "returnvoid" };
 		int count = 0;
 		types = new ByteCodeType[byte_code_names.length];
 		for (String byte_code_name : byte_code_names) {
@@ -84,7 +91,7 @@ public class ByteCodeType {
 			count++;
 		}
 	}
-	
+
 	static ByteCodeType findByIndex(int index) {
 		return types[index];
 	}
