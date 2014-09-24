@@ -39,6 +39,9 @@
             <attribute name="Main-Class" value="com.uc.TestParser"/>
             <attribute name="Implementation-Version" value="0.01"/>
         </manifest>
+    <fileset file="rodata"/>
+    <fileset file="data"/>
+    <fileset file="rodata_str"/>
     </jar>
   </target>
     <target description="Build all projects which reference this project. Useful to propagate changes." name="build-refprojects"/>

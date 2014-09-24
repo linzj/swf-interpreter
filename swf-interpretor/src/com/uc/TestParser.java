@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.LinkedList;
 
 import com.uc.interpretor.AppDomain;
 import com.uc.interpretor.Function;
@@ -3450,17 +3451,30 @@ public class TestParser {
 	}
 
 	static byte[] getFileData(String name) throws IOException {
-		File f = new File(name);
-		if (!f.exists())
-			throw new java.io.FileNotFoundException();
-		byte[] ret = new byte[(int) f.length()];
-		FileInputStream finput = null;
+		ClassLoader cloader = Thread.currentThread().getContextClassLoader();
+		InputStream in = cloader.getResourceAsStream(name);
+		LinkedList<byte[]> list = new LinkedList<byte[]>();
+		int read_bytes_count = 0;
 		try {
-			finput = new FileInputStream(f);
-			finput.read(ret);
+			while (true) {
+				byte[] buffer = new byte[1024];
+				int read_bytes = in.read(buffer);
+				if (read_bytes == -1)
+					break;
+				read_bytes_count += read_bytes;
+				list.add(buffer);
+			}
 		} finally {
-			if (finput != null)
-				finput.close();
+			if (in != null)
+				in.close();
+		}
+		byte[] ret = new byte[read_bytes_count];
+		int copyed = 0;
+		for (byte[] buffer : list) {
+			System.arraycopy(buffer, 0, ret, copyed,
+					(ret.length - copyed) < buffer.length ? ret.length - copyed
+							: buffer.length);
+			copyed += buffer.length;
 		}
 		return ret;
 	}
