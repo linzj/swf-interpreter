@@ -5,7 +5,6 @@ import java.lang.reflect.Modifier;
 
 import com.uc.parser.ByteCode;
 import com.uc.parser.ByteCodeType;
-import com.uc.parser.FunctionData;
 import com.uc.parser.QName;
 
 public class Interpretor {
@@ -162,14 +161,6 @@ public class Interpretor {
 		}
 	}
 
-	public Object loadAppDomain(Integer offset, int what) {
-		return app_domain.loadAppDomain(offset, what);
-	}
-
-	public void setAppDomain(Object value, Integer offset, int what) {
-		app_domain.setAppDomain(value, offset, what);
-	}
-
 	public boolean tryFindInGlobal(QName qName) {
 		return app_domain.tryFindInGlobal(qName);
 	}
@@ -186,9 +177,4 @@ public class Interpretor {
 		this.current_return = true;
 		this.has_value = has_value;
 	}
-
-	public void writeAppDomain(byte[] bytes, int offset) {
-		app_domain.writeBytes(bytes, offset);
-	}
-
 }

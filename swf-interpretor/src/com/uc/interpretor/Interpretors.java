@@ -13,8 +13,16 @@ class Interpretors {
 		@Override
 		public Object interpret(ByteCode code, Context context) {
 			Integer i1 = (Integer) context.pop();
-			Integer i2 = (Integer) context.pop();
-			return i2 + i1;
+			Object o2 = context.pop();
+			if (o2 instanceof Integer) {
+				Integer i2 = (Integer) o2;
+				return i2 + i1;
+			} else if (o2 instanceof DomainBuffer) {
+				DomainBuffer offset = (DomainBuffer) o2;
+				return offset.add(i1);
+			}
+			throw new IllegalStateException(
+					"o2 should either DomainBuffer or Integer");
 		}
 	}
 
@@ -25,11 +33,17 @@ class Interpretors {
 		public Object interpret(ByteCode code, Context context) {
 			Object o1 = context.pop();
 			Object o2 = context.pop();
-			int[] out = objectsToIntegers(o1, o2);
-			int i1 = out[0];
-			int i2 = out[1];
+			if (o2 instanceof Integer || o2 instanceof Byte) {
+				int[] out = objectsToIntegers(o1, o2);
+				int i1 = out[0];
+				int i2 = out[1];
 
-			return i2 & i1;
+				return i2 & i1;
+			} else if (o2 instanceof DomainBuffer) {
+				return ((DomainBuffer) o2).and((Integer) o1);
+			}
+			throw new IllegalStateException(
+					"o2 should either DomainBuffer or Integer");
 		}
 	}
 
@@ -117,6 +131,8 @@ class Interpretors {
 			else if (o instanceof Double)
 				return (int) (double) (o);
 			else if (o instanceof Integer)
+				return o;
+			else if (o instanceof DomainBuffer)
 				return o;
 			else
 				throw new IllegalStateException("unable to convert to integer"
@@ -344,8 +360,8 @@ class Interpretors {
 
 		@Override
 		public Object interpret(ByteCode code, Context context) {
-			Integer offset = (Integer) context.pop();
-			return context.loadAppDomain(offset, 32);
+			DomainBuffer offset = (DomainBuffer) context.pop();
+			return offset.loadAppDomain(32);
 		}
 	}
 
@@ -354,8 +370,8 @@ class Interpretors {
 
 		@Override
 		public Object interpret(ByteCode code, Context context) {
-			Integer offset = (Integer) context.pop();
-			return context.loadAppDomain(offset, 8);
+			DomainBuffer offset = (DomainBuffer) context.pop();
+			return offset.loadAppDomain(8);
 		}
 	}
 
@@ -514,12 +530,12 @@ class Interpretors {
 
 		@Override
 		public Object interpret(ByteCode code, Context context) {
-			Object offset = context.pop();
+			DomainBuffer offset = (DomainBuffer) context.pop();
 			Object value = context.pop();
 			double dvalue = (double) (int) value;
 			byte[] bytes = new byte[8];
 			ByteBuffer.wrap(bytes).putDouble(dvalue);
-			context.writeAppDomain(bytes, (Integer) offset);
+			offset.writeBytes(bytes);
 			return null;
 		}
 	}
@@ -555,9 +571,9 @@ class Interpretors {
 
 		@Override
 		public Object interpret(ByteCode code, Context context) {
-			Integer offset = (Integer) context.pop();
+			DomainBuffer offset = (DomainBuffer) context.pop();
 			Object value = context.pop();
-			context.setAppDomain(value, offset, 32);
+			offset.setAppDomain(value, 32);
 			return null;
 		}
 	}
@@ -567,9 +583,9 @@ class Interpretors {
 
 		@Override
 		public Object interpret(ByteCode code, Context context) {
-			Integer offset = (Integer) context.pop();
+			DomainBuffer offset = (DomainBuffer) context.pop();
 			Object value = context.pop();
-			context.setAppDomain(value, offset, 8);
+			offset.setAppDomain(value, 8);
 			return null;
 		}
 	}
@@ -580,8 +596,16 @@ class Interpretors {
 		@Override
 		public Object interpret(ByteCode code, Context context) {
 			Integer i1 = (Integer) context.pop();
-			Integer i2 = (Integer) context.pop();
-			return i2 - i1;
+			Object o2 = context.pop();
+			if (o2 instanceof Integer) {
+				Integer i2 = (Integer) o2;
+				return i2 - i1;
+			} else if (o2 instanceof DomainBuffer) {
+				DomainBuffer offset = (DomainBuffer) o2;
+				return offset.sub(i1);
+			}
+			throw new IllegalStateException(
+					"o2 should either DomainBuffer or Integer");
 		}
 	}
 
