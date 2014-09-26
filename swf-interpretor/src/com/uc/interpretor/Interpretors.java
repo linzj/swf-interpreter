@@ -14,6 +14,7 @@ class Interpretors {
 		public Object interpret(ByteCode code, Context context) {
 			Object o1 = context.pop();
 			Object o2 = context.pop();
+			// that will works on associative operators
 			if (o1 instanceof DomainBuffer) {
 				Object tmp = o1;
 				o1 = o2;
@@ -613,15 +614,17 @@ class Interpretors {
 		public Object interpret(ByteCode code, Context context) {
 			Object o1 = context.pop();
 			Object o2 = context.pop();
-			if (o1 instanceof DomainBuffer) {
-				Object tmp = o1;
-				o1 = o2;
-				o2 = tmp;
-			}
 			if (o2 instanceof Integer) {
-				Integer i1 = (Integer) o1;
-				Integer i2 = (Integer) o2;
-				return i2 - i1;
+				if (o1 instanceof Integer) {
+					Integer i1 = (Integer) o1;
+					Integer i2 = (Integer) o2;
+					return i2 - i1;
+				} else if (o1 instanceof DomainBuffer) {
+					return ((DomainBuffer)o1).rsb(o2);
+				} else {
+					throw new IllegalStateException(
+							"o1 should either DomainBuffer or Integer");
+				}
 			} else if (o2 instanceof DomainBuffer) {
 				Integer i1 = (Integer) o1;
 				DomainBuffer offset = (DomainBuffer) o2;

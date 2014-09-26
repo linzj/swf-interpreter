@@ -3523,7 +3523,6 @@ public class TestParser {
 				DomainBuffer len = (DomainBuffer) params[1];
 				if (!ptr.isCompatible(len))
 					throw new IllegalStateException("len should always be compatible with ptr");
-				System.err.println(String.format("ptr.getOffset() = %d, ptr.getBuffer().length() = %d, len.getOffset() = %d, len.getBuffer().length() = %d", ptr.getOffset(), ptr.getBuffer().length, len.getOffset(), len.getBuffer().length));
 				ByteBuffer buffer_of_string = ByteBuffer.wrap(ptr.getBuffer(),
 						ptr.getOffset(), len.getOffset());
 				return StandardCharsets.UTF_8.decode(buffer_of_string)

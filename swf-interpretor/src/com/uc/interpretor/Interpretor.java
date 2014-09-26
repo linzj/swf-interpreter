@@ -59,9 +59,14 @@ public class Interpretor {
 			// interpret one.
 			ByteCode code = current_context.getCurrentCode();
 			ByteCodeInterpretor interpretor = getInterpretor(code);
-			Object shouldPush = interpretor.interpret(code, current_context);
-			if (shouldPush != null)
-				current_context.push(shouldPush);
+			try {
+				Object shouldPush = interpretor.interpret(code, current_context);
+				if (shouldPush != null)
+					current_context.push(shouldPush);
+			} catch (Throwable e) {
+				System.err.println("Exception byte code position: " + code.line_number);
+				throw e;
+			}
 		}
 		Object retVal = null;
 		if (this.has_value)

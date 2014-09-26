@@ -3,14 +3,19 @@ package com.uc.interpretor;
 import java.util.HashMap;
 
 public class DomainBuffer {
-	private int offset;
-	private byte[] buffer;
-	private HashMap<Integer, DomainBuffer> bufferMap;
+	private final int offset;
+	private final byte[] buffer;
+	private final HashMap<Integer, DomainBuffer> bufferMap;
 
 	DomainBuffer(int size) {
 		offset = 0;
 		buffer = new byte[size + 1];
 		bufferMap = new HashMap<Integer, DomainBuffer>();
+	}
+
+	@Override
+	public String toString() {
+		return "DomainBuffer: offset = " + offset + ", buffer.length = " + buffer.length;
 	}
 
 	private DomainBuffer(int offset, DomainBuffer other) {
@@ -20,38 +25,51 @@ public class DomainBuffer {
 	}
 
 	public DomainBuffer add(int offset) {
-        return new DomainBuffer(this.offset + offset, this);
+		return new DomainBuffer(this.offset + offset, this);
 	}
 
 	public DomainBuffer add(Object offset) {
-        if (offset instanceof Integer)
-            return new DomainBuffer(this.offset + (Integer)offset, this);
-        else if (offset instanceof DomainBuffer) {
-            DomainBuffer other = (DomainBuffer) offset;
-            if (other.buffer != this.buffer)
-                throw new IllegalStateException("other's buffer should be identical to this");
-            return new DomainBuffer(this.offset + other.offset, this);
-        } else {
-            throw new IllegalArgumentException("the type of offset should be either DomainBuffer or Integer");
-        }
+		if (offset instanceof Integer)
+			return new DomainBuffer(this.offset + (Integer)offset, this);
+		else if (offset instanceof DomainBuffer) {
+			DomainBuffer other = (DomainBuffer) offset;
+			if (!this.isCompatible(other))
+				throw new IllegalStateException("other should always be compatible with this.");
+			return new DomainBuffer(this.offset + other.offset, this);
+		} else {
+			throw new IllegalArgumentException("the type of offset should be either DomainBuffer or Integer");
+		}
 	}
 
 	public DomainBuffer sub(int offset) {
 		return new DomainBuffer(this.offset - offset, this);
 	}
 
+	public DomainBuffer rsb(Object offset) {
+		if (offset instanceof Integer)
+			return new DomainBuffer((Integer)offset - this.offset, this);
+		else if (offset instanceof DomainBuffer) {
+			DomainBuffer other = (DomainBuffer) offset;
+			if (!this.isCompatible(other))
+				throw new IllegalStateException("other should always be compatible with this.");
+			return new DomainBuffer(other.offset - this.offset, this);
+		} else {
+			throw new IllegalArgumentException("the type of offset should be either DomainBuffer or Integer");
+		}
+	}
+
 	public DomainBuffer and(int offset) {
 		return new DomainBuffer(this.offset & offset, this);
 	}
 
-	public DomainBuffer or (int offset) {
+	public DomainBuffer or(int offset) {
 		return new DomainBuffer(this.offset | offset, this);
 	}
 
 	public boolean isCompatible(DomainBuffer other) {
-        if (other.buffer != this.buffer)
-            return false;
-        return true;
+		if (other.buffer != this.buffer)
+			return false;
+		return true;
 	}
 
 	public byte[] getBuffer() {
@@ -110,6 +128,7 @@ public class DomainBuffer {
 				this.bufferMap.put(offset, (DomainBuffer)value);
 				return;
 			}
+			this.bufferMap.remove(offset);
 			// always little endian
 			int ivalue = (Integer) value;
 			byte i0 = (byte) (ivalue & 0xff);
