@@ -12,14 +12,20 @@ class Interpretors {
 
 		@Override
 		public Object interpret(ByteCode code, Context context) {
-			Integer i1 = (Integer) context.pop();
+			Object o1 = context.pop();
 			Object o2 = context.pop();
+			if (o1 instanceof DomainBuffer) {
+				Object tmp = o1;
+				o1 = o2;
+				o2 = tmp;
+			}
 			if (o2 instanceof Integer) {
+				Integer i1 = (Integer) o1;
 				Integer i2 = (Integer) o2;
 				return i2 + i1;
 			} else if (o2 instanceof DomainBuffer) {
 				DomainBuffer offset = (DomainBuffer) o2;
-				return offset.add(i1);
+				return offset.add(o1);
 			}
 			throw new IllegalStateException(
 					"o2 should either DomainBuffer or Integer");
@@ -53,8 +59,16 @@ class Interpretors {
 		@Override
 		public Object interpret(ByteCode code, Context context) {
 			Integer i1 = (Integer) context.pop();
-			Integer i2 = (Integer) context.pop();
-			return i2 | i1;
+			Object o2 = context.pop();
+			if (o2 instanceof Integer) {
+				Integer i2 = (Integer) o2;
+				return i2 | i1;
+			} else if (o2 instanceof DomainBuffer) {
+				DomainBuffer offset = (DomainBuffer) o2;
+				return offset.or(i1);
+			}
+			throw new IllegalStateException(
+					"o2 should either DomainBuffer or Integer");
 		}
 	}
 
@@ -152,6 +166,8 @@ class Interpretors {
 			} else if (o instanceof Double) {
 				Double i = (Double) o;
 				return i - 1;
+			} else if (o instanceof DomainBuffer) {
+				return ((DomainBuffer)o).sub(1);
 			} else
 				throw new IllegalStateException(
 						"unable to decrement non number");
@@ -595,12 +611,19 @@ class Interpretors {
 
 		@Override
 		public Object interpret(ByteCode code, Context context) {
-			Integer i1 = (Integer) context.pop();
+			Object o1 = context.pop();
 			Object o2 = context.pop();
+			if (o1 instanceof DomainBuffer) {
+				Object tmp = o1;
+				o1 = o2;
+				o2 = tmp;
+			}
 			if (o2 instanceof Integer) {
+				Integer i1 = (Integer) o1;
 				Integer i2 = (Integer) o2;
 				return i2 - i1;
 			} else if (o2 instanceof DomainBuffer) {
+				Integer i1 = (Integer) o1;
 				DomainBuffer offset = (DomainBuffer) o2;
 				return offset.sub(i1);
 			}

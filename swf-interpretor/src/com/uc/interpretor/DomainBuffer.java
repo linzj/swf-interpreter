@@ -20,7 +20,20 @@ public class DomainBuffer {
 	}
 
 	public DomainBuffer add(int offset) {
-		return new DomainBuffer(this.offset + offset, this);
+        return new DomainBuffer(this.offset + offset, this);
+	}
+
+	public DomainBuffer add(Object offset) {
+        if (offset instanceof Integer)
+            return new DomainBuffer(this.offset + (Integer)offset, this);
+        else if (offset instanceof DomainBuffer) {
+            DomainBuffer other = (DomainBuffer) offset;
+            if (other.buffer != this.buffer)
+                throw new IllegalStateException("other's buffer should be identical to this");
+            return new DomainBuffer(this.offset + other.offset, this);
+        } else {
+            throw new IllegalArgumentException("the type of offset should be either DomainBuffer or Integer");
+        }
 	}
 
 	public DomainBuffer sub(int offset) {
@@ -29,6 +42,16 @@ public class DomainBuffer {
 
 	public DomainBuffer and(int offset) {
 		return new DomainBuffer(this.offset & offset, this);
+	}
+
+	public DomainBuffer or (int offset) {
+		return new DomainBuffer(this.offset | offset, this);
+	}
+
+	public boolean isCompatible(DomainBuffer other) {
+        if (other.buffer != this.buffer)
+            return false;
+        return true;
 	}
 
 	public byte[] getBuffer() {
@@ -42,7 +65,7 @@ public class DomainBuffer {
 	void writeBytes(byte[] bytes) {
 		if (bytes.length > this.buffer.length) {
 			throw new IllegalArgumentException(
-					"Should never go beyone this.allocate_start");
+					"Should never go beyond this.allocate_start");
 		}
 		System.arraycopy(bytes, 0, this.buffer, 0, bytes.length);
 	}
