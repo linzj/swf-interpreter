@@ -5,7 +5,6 @@ import java.util.HashMap;
 import com.uc.parser.ByteCode;
 import com.uc.parser.ByteCodeType;
 import com.uc.parser.Code;
-import com.uc.parser.FunctionData;
 import com.uc.parser.QName;
 
 class Context {
@@ -19,10 +18,10 @@ class Context {
 	int pc = 0;
 	private Code code;
 	private HashMap<String, Integer> label_map = new HashMap<String, Integer>();
-	
+
 	private void setupLocals(Object receiver, Object[] params) {
 		locals[0] = receiver;
-		for(int i = 0 ; i < params.length ; ++i) {
+		for (int i = 0; i < params.length; ++i) {
 			locals[i + 1] = params[i];
 		}
 	}
@@ -40,7 +39,8 @@ class Context {
 		}
 	}
 
-	Context(Function f, Interpretor interpretor, Object receiver, Object [] params) {
+	Context(Function f, Interpretor interpretor, Object receiver,
+			Object[] params) {
 		function = f;
 		code = f.getData().code;
 		locals = new Object[f.getData().local_count];
@@ -71,15 +71,6 @@ class Context {
 		pc = offset;
 	}
 
-	public Object loadAppDomain(Integer offset, int what) {
-		return interpretor.loadAppDomain(offset, what);
-	}
-
-	public void setAppDomain(Object value, Integer offset, int what) {
-		// TODO Auto-generated method stub
-		interpretor.setAppDomain(value, offset, what);
-	}
-
 	public Object findProperty(QName qName) {
 		if (interpretor.tryFindInGlobal(qName))
 			return interpretor.getGlobalObject();
@@ -108,7 +99,6 @@ class Context {
 		interpretor.setReturn(false);
 	}
 
-
 	public void setProperty(Object objectToFind, QName qName, Object value) {
 		Receiver kv = (Receiver) objectToFind;
 		kv.set(qName, value);
@@ -117,9 +107,4 @@ class Context {
 	public ByteCode getCurrentCode() {
 		return code.byte_codes.get(pc++);
 	}
-
-	public void writeAppDomain(byte[] bytes, int offset) {
-		interpretor.writeAppDomain(bytes, offset);
-	}
-
 }

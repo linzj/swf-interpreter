@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.LinkedList;
 
 import com.uc.interpretor.AppDomain;
+import com.uc.interpretor.DomainBuffer;
 import com.uc.interpretor.Function;
 import com.uc.interpretor.Interpretor;
 import com.uc.interpretor.Module;
@@ -3494,8 +3495,8 @@ public class TestParser {
 	public static void main(String[] args) {
 		Function f = getCCCFunction();
 		final AppDomain appDom = new AppDomain();
-		appDom.setGlobal(new QName("com.tencent.utils.flascc", "ESP"),
-				appDom.allocate(40960) + 40960);
+		appDom.setGlobal(new QName("com.tencent.utils.flascc", "ESP"), appDom
+				.allocate(40960).add(40960));
 		final Module CModule = new Module(new QName("com.tencent.utils.flascc",
 				"CModule"));
 		CModule.set(new QName("", "mallocString"), new NativeFunction() {
@@ -3518,10 +3519,12 @@ public class TestParser {
 				if (params.length != 2)
 					throw new IllegalArgumentException(
 							"needs extractly 2 arguments");
-				Integer ptr = (Integer) params[0];
-				Integer len = (Integer) params[1];
-				ByteBuffer buffer_of_string = ByteBuffer.wrap(
-						appDom.getDomainMemory(), ptr, len);
+				DomainBuffer ptr = (DomainBuffer) params[0];
+				DomainBuffer len = (DomainBuffer) params[1];
+				if (!ptr.isCompatible(len))
+					throw new IllegalStateException("len should always be compatible with ptr");
+				ByteBuffer buffer_of_string = ByteBuffer.wrap(ptr.getBuffer(),
+						ptr.getOffset(), len.getOffset());
 				return StandardCharsets.UTF_8.decode(buffer_of_string)
 						.toString();
 			}
@@ -3534,32 +3537,32 @@ public class TestParser {
 		// set up ro data here
 		try {
 			byte[] rodata = getROData();
-			int offset = appDom.allocateFromBytes(rodata);
+			DomainBuffer offset = appDom.allocateFromBytes(rodata);
 			appDom.setGlobal(
 					new QName(
 							"com.tencent.utils.flascc__3A__5C_tools_5C_Crossbridge_1_2E_0_2E_1_5C_cygwin_5C_tmp_5C_cc5XyE1n_2E_lto_2E_bc_3A_88a86364_2D_2ed8_2D_4437_2D_97b8_2D_85f87616a043",
-							"L__2E_str3"), offset + 144);
+							"L__2E_str3"), offset.add(144));
 		} catch (IOException e) {
 			throw new IllegalStateException("fails to set up ro data", e);
 		}
 		try {
 			byte[] data = getData();
-			int offset = appDom.allocateFromBytes(data);
+			DomainBuffer offset = appDom.allocateFromBytes(data);
 			appDom.setGlobal(
 					new QName(
 							"com.tencent.utils.flascc__3A__5C_tools_5C_Crossbridge_1_2E_0_2E_1_5C_cygwin_5C_tmp_5C_cc5XyE1n_2E_lto_2E_bc_3A_88a86364_2D_2ed8_2D_4437_2D_97b8_2D_85f87616a043",
-							"_next"), offset + 120);
+							"_next"), offset.add(120));
 		} catch (IOException e) {
 			throw new IllegalStateException("fails to set up ro data", e);
 		}
 		try {
 			byte[] data = getROStrData();
-			int offset = appDom.allocateFromBytes(data);
+			DomainBuffer offset = appDom.allocateFromBytes(data);
 			appDom.setGlobal(
 					new QName(
 							"com.tencent.utils.flascc__3A__5C_tools_5C_Crossbridge_1_2E_0_2E_1_5C_cygwin_5C_tmp_5C_cc5XyE1n_2E_lto_2E_bc_3A_88a86364_2D_2ed8_2D_4437_2D_97b8_2D_85f87616a043",
 							"__ZZ28convertHexDataToBase64StringE10base64Char"),
-					offset + 0);
+					offset.add(0));
 		} catch (IOException e) {
 			throw new IllegalStateException("fails to set up ro data", e);
 		}
