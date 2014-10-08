@@ -658,11 +658,8 @@ class Interpretors {
 			int[] out = objectsToIntegers(o1, o2);
 			int i1 = out[0];
 			int i2 = out[1];
-			int ret = i2 >> i1;
-			int andValue = 0;
-			for (int i = 0; i < i1; ++i)
-				andValue |= 1 << (31 - i);
-			return ret & (~andValue);
+			int ret = i2 >>> i1;
+			return ret;
 		}
 	}
 
